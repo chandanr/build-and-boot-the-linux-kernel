@@ -1,0 +1,386 @@
+\documentclass{beamer}
+
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{tikz}
+% \usepackage{verbatim}
+% \usepackage{fancyvrb}
+\usepackage{listings}
+\usepackage{courier}
+\usepackage{tikz}
+\usepackage{graphicx}
+
+% \usefonttheme{serif} % default family is serif
+% \usepackage{fontspec}
+% \setmainfont{Liberation Serif}
+
+\usetikzlibrary{positioning, fit, matrix, decorations.pathreplacing, shadows}
+\lstset{basicstyle=\ttfamily\footnotesize,breaklines=true}
+
+\mode<presentation>
+{
+  % \usetheme{Marburg}
+  % \usetheme{Montpellier}
+  % \usetheme{Hannover}
+  % \usetheme{Berkeley}
+  \usetheme{Antibes}
+  % or ...
+
+  % \setbeamercovered{transparent}
+  % or whatever (possibly just delete it)
+}
+
+\title{Build \& boot the Linux kernel}
+\author{Chandan \& Vasant}
+\date{}
+
+% TODOs.
+% 1. dmesg (Chandan)
+% 2. kallsyms (Vasant)
+% 3. make allyesconfig/allmodconfig/localmodconfig (Vasant)
+% 4. uname -a (Chandan)
+% 5. System.map (Vasant)
+% 6. Initramfs/initrd. (Chandan)
+% 7. vmlinuz v/s vmlinux (Chandan)
+
+\begin{document}
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\section{What are we building?}
+\begin{frame}
+  % DONE: TODO: Add software stack diagram and highlight Linux kernel component
+  \center {
+  \begin{tikzpicture}
+    [outer sep = 0pt, component/.style={rectangle, draw=black, fill =
+      blue!20, thin, text width = 5cm, minimum height = 1cm, inner
+      sep = 0pt}]
+    \matrix (software_stack) [matrix of nodes, nodes in empty cells,
+    column sep=2pt, row sep=2pt,
+    nodes = {component, outer sep = 0pt, anchor=center, align=center}]  {
+      Applications \\
+      \textbf{Linux kernel} \\
+      Bootloader \\
+      Firmware (BIOS) \\
+      Hardware \\
+    };
+    \draw [->, thick] ([xshift=-30pt]software_stack-2-1.west) -- (software_stack-2-1.west);
+  \end{tikzpicture}  
+}
+\end{frame}
+
+\begin{frame}
+Building the kernel results in the following files being created,
+\begin{itemize}
+\item kernel image (\texttt{bzImage} aka \texttt{vmlinuz})
+\item kernel modules (E.g. \texttt{ext4.ko}) \\
+  Code that is pluggable at run time.
+% DONE: TODO: Mention that the build is for system currently running.
+\end{itemize}
+NOTE: The kernel is being built only for the x86 architecture.
+\end{frame}
+
+\section{Set up kernel sources}
+\label{sec:set-up-kernel-1}
+
+\begin{frame}[fragile]
+  \begin{itemize}
+  \item Download kernel source archive
+    \begin{lstlisting}
+$ wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+    \end{lstlisting}
+
+  \item Extract kernel source
+    \begin{lstlisting}
+$ tar xvf linux-4.19.tar.xz 
+$ cd linux-4.19/
+    \end{lstlisting}
+  \end{itemize}
+\end{frame}
+
+\section{Layout of the kernel sources}
+\label{sec:layout-kernel-source}
+
+\begin{frame}[fragile]
+  \begin{tabular}{ll}
+    \texttt{arch} & \texttt{kernel} \\
+    \texttt{block} & \texttt{lib} \\
+    \texttt{certs} & \texttt{LICENSES} \\
+    \texttt{COPYING} & \texttt{MAINTAINERS} \\
+    \texttt{CREDITS} & \texttt{Makefile} \\
+    \texttt{crypto} & \textbf{\texttt{mm}} \\
+    \textbf{\texttt{Documentation}} & \textbf{\texttt{net}} \\
+    \textbf{\texttt{drivers}} & \texttt{README} \\
+    \texttt{firmware} & \texttt{samples} \\
+    \textbf{\texttt{fs}} & \texttt{scripts} \\
+    \texttt{include} & \texttt{security} \\
+    \texttt{init} & \texttt{sound} \\
+    \texttt{ipc} & \texttt{tools} \\
+    \texttt{Kbuild} & \texttt{usr} \\
+    \texttt{Kconfig} & \texttt{virt} \\
+  \end{tabular}
+\end{frame}
+
+\section{Makefile example}
+\label{sec:makefiles}
+
+\begin{frame}[fragile]
+  \begin{itemize}
+  \item \texttt{add.h}
+\begin{lstlisting}
+#ifndef _ADD_H
+#define _ADD_H
+
+int add(int n1, int n2);
+
+#endif
+\end{lstlisting}
+  \item \texttt{add.c}
+\begin{lstlisting}
+#include "add.h"
+
+int add(int n1, int n2)
+{
+        return n1 + n2;
+}
+\end{lstlisting}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \begin{itemize}
+  \item \texttt{main.c}
+\begin{lstlisting}
+#include <stdio.h>
+#include <stdlib.h>
+#include "add.h"
+
+int main(void)
+{
+        int sum;
+
+        sum = add(3, 3);
+
+        printf("sum = %d.\n", sum);
+
+        exit(0);
+}
+\end{lstlisting}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \begin{itemize}
+  \item Makefile
+\begin{lstlisting}
+main : main.o add.o add.h
+        cc -o main main.o add.o
+
+main.o : main.c add.h
+        cc -c main.c
+
+add.o : add.c add.h
+        cc -c add.c
+\end{lstlisting}
+  \end{itemize}
+\end{frame}
+
+\section{Linux kernel Makefiles}
+
+\begin{frame}[fragile]
+  \begin{itemize}
+  \item Contains sequence of commands to build the source code in
+    order to generate the kernel image, kernel modules, etc.
+  \item Think of Makefiles as recipes of instructions on how to build the
+    kernel.
+  \item Each subdirectory contains its own Makefile which invokes commands to
+    build modules from source code.
+\begin{lstlisting}
+$ ls virt/
+kvm  lib  Makefile
+\end{lstlisting}
+  \item The top level Makefile invokes Makefiles in each of the sub directories
+    and collates some of the kernel modules to generate the kernel image.
+  \end{itemize}
+\end{frame}
+
+\section{Configure kernel build}
+\label{sec:configure-kbuild}
+
+\begin{frame}[fragile]
+  \begin{itemize}
+  \item ... AKA How do Makefiles determine which parts of the kernel sources must be built,
+    \begin{itemize}
+    \item As part of the kernel image
+    \item And which ones should be built as kernel modules.
+    \end{itemize}
+  \item A \texttt{.config} file contains the above information.
+  \item Let's generate the \texttt{.config} file with default/recommended
+    values.
+    \begin{lstlisting}
+$ make localmodconfig
+LEX     scripts/kconfig/zconf.lex.c
+HOSTCC  scripts/kconfig/zconf.tab.o
+HOSTLD  scripts/kconfig/conf
+#
+# configuration written to .config
+#
+\end{lstlisting}
+  \item Let's start building the \textbf{kernel image}.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \begin{itemize}
+\item Sample entries from the default .config file.
+  \begin{itemize}
+  \item \texttt{CONFIG\_X86\_PKG\_TEMP\_THERMAL=m} \\
+    Indicates that \emph{Thermal driver} code should be built as a separate module.
+  \item \texttt{CONFIG\_EXT4\_FS=y} \\
+    Indicates that \emph{Ext4} code should be made part of bzImage.
+  \item \texttt{\# CONFIG\_EXT4\_ENCRYPTION is not set} \\
+    Do not build \emph{Encryption} feature of Ext4; Not even as a module.
+    % HINT: Ask the audience to not focus on the details of each entry inside
+    % .config.
+  \end{itemize}
+\begin{lstlisting}
+\end{lstlisting}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{lstlisting}
+$ make menuconfig
+    \end{lstlisting}
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.3]{images/make-menuconfig.png}
+  \end{figure}
+\end{frame}
+
+% TODO: Mention about the ability to search through config information.
+\subsection{Example: Enable access to .config via /proc}
+\begin{frame}
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.3]{images/proc-config-0.png}
+  \end{figure}
+\end{frame}
+
+\begin{frame}
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.3]{images/proc-config-1.png}
+  \end{figure}
+\end{frame}
+
+\begin{frame}
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.3]{images/proc-config-2.png}
+  \end{figure}
+\end{frame}
+
+
+\begin{frame}
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.3]{images/proc-config-3.png}
+  \end{figure}
+\end{frame}
+
+\section{Build and install the kernel}
+
+\begin{frame}[fragile]
+\begin{itemize}
+\item Build the kernel image.
+  \begin{lstlisting}
+    $ make bzImage
+  \end{lstlisting}
+
+\item Build kernel modules
+  \begin{lstlisting}
+    $ make modules
+  \end{lstlisting}
+  
+\item Install the kernel modules
+  \begin{lstlisting}
+    $ make modules_install
+  \end{lstlisting}
+  The kernel modules built are copied to {\tiny\texttt{/lib/modules/<kernel-version>/}}
+
+\item Install the kernel image
+  \begin{lstlisting}
+    $ make install
+  \end{lstlisting}
+  \begin{itemize}
+  \item Copies bzImage to {\tiny \texttt{/boot/vmlinuz-<kernel-version>}}.
+  \item Builds the corresponding initramfs
+    i.e. {\tiny \texttt{/boot/initramfs-<kernel-version>}}.
+  \item Adds an entry into the bootloader's configuration file i.e. {\tiny \texttt{/boot/grub2/grub.cfg}}.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\section{Dmesg - Kernel communicates with the user}
+
+\subsection{Introduction to printk()}
+
+\begin{frame}
+  \begin{itemize}
+  \item \texttt{printk()} is a function provided to print data from the kernel
+    code.
+  \item Has similar semantics to Standard C library's \texttt{printf()}.
+
+  \item \texttt{printk()} dumps its contents to a ring buffer maintained by
+    the kernel.
+    % TODO: Add an example invocation.
+  \end{itemize}
+\end{frame}
+
+% TODO: Talk about levels.
+\begin{frame}
+  \begin{itemize}
+  \item \texttt{dmesg} utility helps us extract the contents of kernel's ring
+    buffer and prints the contents on the terminal.
+  \item Example invocation:
+    \begin{figure}[h!]
+      \centering
+      \includegraphics[scale=0.3]{images/dmesg-0.png}
+    \end{figure}
+  \end{itemize}
+\end{frame}
+
+
+\section{Assignment}
+% TODO: Explain what "uname" command does.
+\begin{frame}
+  Configure, build and boot the Linux kernel such that the output of the
+  command \texttt{uname -r} has your name suffixed to the original value. 
+    \begin{figure}[h!]
+      \centering
+      \includegraphics[scale=0.5]{images/assignment.png}
+    \end{figure}
+\end{frame}
+
+\section{Further reading}
+
+\begin{frame}
+  \begin{itemize}
+  \item Kernel build configuration: https://www.youtube.com/watch?v=M-Nx3-p6T7k
+  \item Makefile: https://en.wikipedia.org/wiki/Makefile
+  \end{itemize}
+  
+\end{frame}
+
+\end{document}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
