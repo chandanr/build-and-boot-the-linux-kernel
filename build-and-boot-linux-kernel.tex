@@ -54,7 +54,6 @@
 
 \section{What are we building?}
 \begin{frame}
-  % DONE: TODO: Add software stack diagram and highlight Linux kernel component
   \center {
   \begin{tikzpicture}
     [outer sep = 0pt, component/.style={rectangle, draw=black, fill =
@@ -81,7 +80,6 @@ Building (\& installing) the kernel results in the following files being created
 \item Initramfs image.
 \item kernel modules (E.g. \texttt{ext4.ko}) \\
   Code that is pluggable at run time.
-% DONE: TODO: Mention that the build is for system currently running.
 \end{itemize}
 NOTE: The kernel is currently being built only for the x86 architecture.
 \end{frame}
@@ -291,12 +289,28 @@ $ make menuconfig
   \end{figure}
 \end{frame}
 
-% TODO: Mention about the ability to search through config information.
 \subsection{Example: Enable access to .config via /proc}
 \begin{frame}
   \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.3]{images/proc-config-0.png}
+  \end{figure}
+\end{frame}
+
+\begin{frame}
+  Type \texttt{/} (Forward slash character) to search.
+  \begin{figure}
+    \centering
+    \includegraphics[scale=0.4]{images/proc-config-0-1.png}
+  \end{figure}
+\end{frame}
+
+\begin{frame}
+  The search results will display the path to navigate in order to get to the
+  config option.
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.4]{images/proc-config-0-2.png}
   \end{figure}
 \end{frame}
 
@@ -386,11 +400,11 @@ $ make menuconfig
   \end{itemize}
 \end{frame}
 
-
 \section{Assignment}
 \begin{frame}[fragile]
   \begin{itemize}
-  \item \texttt{uname} extracts information about the running kernel.
+  \item \texttt{uname} extracts information about the currently running
+    kernel.
   \item Example interaction,
 \begin{lstlisting}
 $ uname -s # Kernel name
@@ -412,10 +426,11 @@ x86_64
       \centering
       \includegraphics[scale=0.5]{images/assignment.png}
     \end{figure}
+    HINT: Search for the string \texttt{version} in the interface provided by
+    \texttt{make menuconfig}.
 \end{frame}
 
 \section{Further reading}
-
 \begin{frame}
   \begin{itemize}
   \item Kernel build configuration:
@@ -423,11 +438,9 @@ x86_64
   \item Initramfs: {\tiny  http://www.linuxfromscratch.org/blfs/view/svn/postlfs/initramfs.html}
   \item Makefile: { \tiny https://en.wikipedia.org/wiki/Makefile }
   \end{itemize}
-  
 \end{frame}
 
 \end{document}
-
 
 %%% Local Variables:
 %%% mode: latex
