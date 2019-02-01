@@ -220,6 +220,22 @@ int main(void)
   \end{itemize}
 \end{frame}
 
+\subsection{Makefile syntax}
+\begin{frame}[fragile]
+  \begin{itemize}
+  \item A Makefile consists of a sequence of rules
+  \item Each rule has the following syntax,
+\begin{lstlisting}
+TARGET : PRE-REQUISITES
+<TAB> COMMAND1
+<TAB> COMMAND2
+<TAB> ...
+<TAB> COMMANDN
+\end{lstlisting}
+  \end{itemize}
+\end{frame}
+
+
 \begin{frame}[fragile]
   \begin{itemize}
   \item Makefile
@@ -232,6 +248,10 @@ main.o : main.c add.h
 
 add.o : add.c add.h
         cc -c add.c
+
+list_etc :
+        @echo "/etc contents:"
+        ls /etc
 \end{lstlisting}
   \end{itemize}
 \end{frame}
