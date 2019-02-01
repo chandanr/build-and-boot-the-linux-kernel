@@ -95,6 +95,20 @@ NOTE: The kernel is currently being built only for the x86 architecture.
   \item The prefixed executable is the one which decompresses the compressed
     vmlinux image.
   \end{itemize}
+  \begin{center}
+  \begin{tikzpicture}
+    [outer sep = 0pt, component/.style={rectangle, draw=black, fill =
+      blue!20, thin, text width = 2cm, minimum height = 1cm, inner
+      sep = 0pt}]
+
+    \matrix (vmlinuz_stack) [matrix of nodes, nodes in empty cells,
+    column sep=2pt, row sep=2pt,
+    nodes = {component, outer sep = 0pt, anchor=center, align=center}]  {
+      {\tiny \textbf{Decompressor}} \pgfmatrixnextcell \pgfmatrixnextcell \\
+    };
+    \node [component, fill=blue!20, fit=(vmlinuz_stack-1-2.south west) (vmlinuz_stack-1-3.north east), outer sep = 0pt, label=center:\textbf{VMLINUX}] {};
+  \end{tikzpicture}
+\end{center}
 \end{frame}
 
 \subsection{Initramfs}
